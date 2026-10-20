@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MCR 3D – Ranjani 10 MW</title>
+<style>
+:root{--bg:#e8edea;--fg:#17231f;--pn:rgba(255,255,255,.92);--ln:#c1ccc6;--ac:#0f6e56;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121816;--fg:#e3ebe7;--pn:rgba(27,35,32,.92);--ln:#36433d;--ac:#5dcaa5;--on:#0b1511}}
+:root[data-theme="dark"]{--bg:#121816;--fg:#e3ebe7;--pn:rgba(27,35,32,.92);--ln:#36433d;--ac:#5dcaa5;--on:#0b1511}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--fg);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.p{position:fixed;background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:8px 10px}
+#hd{top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;max-width:min(350px,calc(100% - 16px));max-height:60%;overflow:auto}
+#hd h1{font-size:15px;margin:0}#hd small{opacity:.75}
+#hd summary{cursor:pointer;color:var(--ac);font-weight:600;margin-top:6px}
+#hd ul{margin:4px 0 0;padding-left:16px}#hd li{margin:3px 0}
+#bar{bottom:calc(env(safe-area-inset-bottom,0px) + 8px);left:50%;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100% - 16px)}
+button{font:inherit;color:var(--fg);background:transparent;border:1px solid var(--ln);border-radius:6px;padding:4px 9px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+button.on{background:var(--ac);color:var(--on);border-color:var(--ac)}
+.s{width:1px;background:var(--ln)}
+#lb div{position:fixed;left:0;top:0;pointer-events:none;font-size:10.5px;line-height:1.25;text-align:center;white-space:nowrap;background:var(--pn);border:1px solid var(--ln);border-radius:4px;padding:1px 5px}
+#lb b{display:block;font-weight:600}
+</style></head><body>
+<canvas id="c"></canvas><div id="lb"></div>
+<div class="p" id="hd"><h1>Main Control Room</h1><small>10 MW(AC) Solar Power Plant, Ranjani, Dist. Sangli – drawn from sheets C029 to C033</small>
+<details><summary>Drawing data</summary><ul>
+<li>Grid 10.19 × 11.69 m; 230 mm external and 115 mm internal brick walls</li>
+<li>Levels: FGL ±0.00, FFL +0.60, roof TOC +4.20, parapet 115 × 600</li>
+<li>Rooms: store 4.115 × 2.198, panel 4.115 × 2.415, battery 4.115 × 2.145, SCADA 4.115 × 2.743, pantry 4.115 × 1.500, office 6.815 × 4.115 m</li>
+<li>Openings: D1 × 6, D2 × 2, D3 × 2, W × 8 (1800 × 1200), V × 2 (600 × 900)</li>
+<li>Structure: columns C1–C16, plinth beams TOC +0.55, roof beams 230 × 400/450, lintels BOC +2.70</li>
+<li>SBC 30 T/m² at 1.0 m and 42.75 T/m² at 1.5 m (geotechnical report)</li>
+<li>Roof: 500 L PVC tank, ladder on east face; septic tank and soak pit south of the building</li>
+<li>Indicative only: toilet and passage partitions, column and beam sections, service positions</li></ul></details></div>
+<div class="p" id="bar">
+<button data-t="roof" class="on">Roof</button><button data-t="lab">Labels</button><button data-t="xr">X‑ray</button><button data-t="str">Structure</button><span class="s"></span>
+<button data-v="3D">3D</button><button data-v="Plan">Plan</button><button data-v="N">N</button><button data-v="E">E</button><button data-v="S">S</button><button data-v="W">W</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const T=THREE,cv=document.getElementById('c'),lb=document.getElementById('lb');
+let R;try{R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true})}catch(e){document.body.insertAdjacentHTML('beforeend','<p style="padding:20px">WebGL is unavailable in this browser.</p>');throw e}
+const S=new T.Scene(),C=new T.PerspectiveCamera(38,1,.1,300);
+R.setPixelRatio(Math.min(devicePixelRatio||1,2));
+S.add(new T.AmbientLight(0xffffff,.8));const DL=new T.DirectionalLight(0xffffff,.7);DL.position.set(-9,15,-7);S.add(DL);
+const mat=(c,o)=>new T.MeshLambertMaterial(Object.assign({color:c},o));
+const grp=()=>{const g=new T.Group();S.add(g);return g},WG=grp(),RG=grp(),SG=grp();
+function bx(x0,y0,z0,x1,y1,z1,m,g){const e=new T.Mesh(new T.BoxGeometry(x1-x0,y1-y0,z1-z0),m);e.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);(g||S).add(e);return e}
+const WM=mat(0xebe5d6),CM=mat(0xc8c3b8),SM=mat(0xaaa496),GL={transparent:true,opacity:.5};
+const OM={W:mat(0x86c1ea,GL),V:mat(0x86c1ea,GL),D1:mat(0x9fb0ba),D2:mat(0x6f8594),D3:mat(0x3f4d57)};
+const gd=new T.Mesh(new T.PlaneGeometry(60,60),mat(0x9aa88b));gd.rotation.x=-Math.PI/2;gd.position.set(5.1,-.02,6);S.add(gd);
+bx(-1.115,0,-1.115,11.305,.03,12.805,CM);
+function wall(ax,f,a,b,t,ops,y0=0){
+ const y1=4.08,h=t/2,B=(s,e,l,u)=>{if(e-s<.002||u-l<.002)return;ax=='x'?bx(s,l,f-h,e,u,f+h,WM,WG):bx(f-h,l,s,f+h,u,e,WM,WG)};
+ let c=a;
+ for(const [s,w,sl,hd,ty,pr] of ops.sort((p,q)=>p[0]-q[0])){
+  B(c,s,y0,y1);B(s,s+w,y0,sl);B(s,s+w,hd,y1);c=s+w;
+  bx(...(ax=='x'?[s,sl,f-.02,s+w,hd,f+.02]:[f-.02,sl,s,f+.02,hd,s+w]),OM[ty],WG);
+  if(pr){const g=Math.sign(pr),e=Math.abs(pr),m=s+w/2,q=(ty=='D3'?2.1:w+.6)/2,p0=f+g*h,p1=p0+g*e,y=ty=='D3'?2.75:hd,lo=Math.min(p0,p1),hi=Math.max(p0,p1);
+   ax=='x'?bx(m-q,y,lo,m+q,y+.1,hi,SM,WG):bx(lo,y,m-q,hi,y+.1,m+q,SM,WG)}
+ }
+ B(c,b,y0,y1);
+}
+const D=(c,w,ty,pr)=>[c-w/2,w,ty=='V'?1.8:ty=='W'?1.5:.6,2.7,ty,pr],di=cs=>cs.map(c=>D(c,1.2,'D1'));
+wall('x',0,-.115,10.305,.23,[D(5.095,1.5,'D3',-1.5),D(8.1,1.8,'W',-.45)]);
+wall('x',11.69,-.115,10.305,.23,[D(2.125,1.8,'W',.45),D(5.095,1.5,'D3',.75),D(7.04,.6,'V',.3),D(9.1,.6,'V',.3)]);
+wall('z',0,.115,11.575,.23,[1.21,3.64,6.03,8.59].map(c=>D(c,1.8,'W',-.45)));
+wall('z',10.19,.115,11.575,.23,[3.8,7.2].map(c=>D(c,1.8,'W',.45)));
+wall('z',4.23,.115,11.575,.115,di([1.21,3.64,6.03,8.59,10.8]),.6);
+for(const z of [2.37,4.9,7.16,10.018])wall('x',z,.115,4.2,.115,[],.6);
+wall('z',5.96,1.72,8.6,.115,di([5.0]),.6);wall('z',5.96,9.55,11.575,.115,[],.6);
+wall('x',1.72,5.9,10.075,.115,[],.6);wall('x',8.6,5.9,10.075,.115,[],.6);
+wall('x',9.55,5.9,10.075,.115,[D(7.04,.75,'D2'),D(9.1,.75,'D2')],.6);wall('z',8.1,9.55,11.575,.115,[],.6);
+bx(.115,0,.115,10.075,.6,11.575,CM,WG);
+const LB=[],RM=[['Store room','4.115 × 2.198',.115,.115,4.172,2.313,0xd9d2c0],['Panel room','4.115 × 2.415',.115,2.428,4.172,4.843,0xc9d6dc],['Battery room','4.115 × 2.145',.115,4.958,4.172,7.103,0xd9cfae],['SCADA room','4.115 × 2.743',.115,7.218,4.172,9.961,0xc7d9c9],['Pantry','4.115 × 1.500',.115,10.076,4.172,11.575,0xe0d0c2],['Corridor','',4.288,.115,5.902,11.575,0xcfcbc0],['Reception','',6.017,.115,10.075,1.66,0xe0d6bf],['Office room','6.815 × 4.115',6.017,1.775,10.075,8.54,0xd6dfe8],['Passage','',6.017,8.66,10.075,9.49,0xcfcbc0],['Ladies toilet','2.861 × 1.94',6.017,9.6,8.04,11.575,0xcfe0e6],['Gents toilet','2.89 × 1.94',8.16,9.6,10.075,11.575,0xcfe0e6]];
+const mk=(n,s,x,y,z)=>{const d=document.createElement('div');d.innerHTML='<b>'+n+'</b>'+s;lb.append(d);LB.push({d,c:new T.Vector3(x,y,z)})};
+for(const r of RM){const m=new T.Mesh(new T.PlaneGeometry(r[4]-r[2],r[5]-r[3]),mat(r[6]));m.rotation.x=-Math.PI/2;m.position.set((r[2]+r[4])/2,.605,(r[3]+r[5])/2);S.add(m);mk(r[0],r[1],(r[2]+r[4])/2,1.1,(r[3]+r[5])/2)}
+const PM=mat(0xe6e1d4);
+bx(-.115,4.08,-.115,10.305,4.2,11.805,mat(0xd2cdc1),RG);
+for(const b of [[-.115,-.115,10.305,0],[-.115,11.69,10.305,11.805],[-.115,0,0,11.69],[10.19,0,10.305,11.69]])bx(b[0],4.2,b[1],b[2],4.8,b[3],PM,RG);
+bx(7.2,4.2,9.6,8.4,4.5,10.8,CM,RG);
+const tk=new T.Mesh(new T.CylinderGeometry(.6,.6,1.2,32),mat(0x2e4a63));tk.position.set(7.8,5.1,10.2);RG.add(tk);
+const am=mat(0x6b6b6b);
+for(const z of [10.85,11.15])bx(10.43,0,z-.02,10.47,4.9,z+.02,am);
+for(let y=.3;y<4.8;y+=.3)bx(10.43,y,10.85,10.47,y+.03,11.15,am);
+const sh=new T.Shape();sh.moveTo(0,0);sh.lineTo(3.6,0);sh.lineTo(3.6,.55);sh.lineTo(0,0);
+const rp=new T.Mesh(new T.ExtrudeGeometry(sh,{depth:1,bevelEnabled:false}),CM);rp.position.set(.595,0,-1.115);S.add(rp);
+const rl=new T.Mesh(new T.BoxGeometry(3.64,.04,.04),am);rl.position.set(2.395,1.225,-1.115);rl.rotation.z=Math.atan(.55/3.6);S.add(rl);
+bx(4.195,0,-1.5,5.995,.55,-.115,CM);bx(4.195,0,-2,5.995,.275,-1.5,CM);bx(4.195,0,11.805,5.995,.3,12.3,CM);
+const cyl=(x,z,r,c)=>{const e=new T.Mesh(new T.CylinderGeometry(r,r,.06,24),mat(c));e.position.set(x,.05,z);S.add(e)};
+bx(6.9,0,13.85,8.9,.05,14.75,mat(0x8a8f86));cyl(7.4,14.3,.375,0x444444);cyl(8.4,14.3,.375,0x444444);cyl(10.2,14.3,.75,0x7d8a70);
+mk('Septic tank','2.0 × 0.9',7.9,.6,14.3);mk('Soak pit','',10.2,.6,14.3);mk('Ramp 1:6','',2.4,.9,-.6);
+const SC=mat(0xb5ad9f),X=[0,4.23,5.96,10.19],Z=[0,4.9,7.16,11.69];
+for(const x of X)for(const z of Z)bx(x-.115,0,z-.15,x+.115,4.08,z+.15,SC,SG);
+for(const z of Z){bx(0,3.63,z-.115,10.19,4.08,z+.115,SC,SG);bx(0,.2,z-.115,10.19,.55,z+.115,SC,SG)}
+for(const x of X){bx(x-.115,3.63,0,x+.115,4.08,11.69,SC,SG);bx(x-.115,.2,0,x+.115,.55,11.69,SC,SG)}
+const st={roof:1,lab:0,xr:0,str:0};
+function ap(){RG.visible=!!st.roof;SG.visible=!!st.str;const g=st.xr||st.str;WM.opacity=g?.14:1;WM.transparent=!!g;WM.depthWrite=!g;WM.needsUpdate=true;lb.style.display=st.lab?'block':'none';document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',!!st[b.dataset.t]))}
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const k=b.dataset.t;st[k]^=1;if(k=='lab'&&st.lab)st.roof=0;ap()});ap();
+const V={'3D':[-2.36,1.05],Plan:[0,.02],N:[Math.PI,1.38],E:[1.57,1.38],S:[0,1.38],W:[-1.57,1.38]};
+let th=-2.36,ph=1.05,rd=innerWidth<640?38:26;const tg=new T.Vector3(5.1,1.8,5.8),P=new Map(),cl=v=>Math.min(48,Math.max(6,v));
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{[th,ph]=V[b.dataset.v]});
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);P.set(e.pointerId,[e.clientX,e.clientY])});
+cv.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;const o=P.get(e.pointerId);
+ if(P.size==1){th-=(e.clientX-o[0])*.008;ph=Math.min(1.55,Math.max(.02,ph-(e.clientY-o[1])*.008))}
+ else{const q=[...P].find(([k])=>k!=e.pointerId)[1];rd=cl(rd*Math.hypot(o[0]-q[0],o[1]-q[1])/Math.hypot(e.clientX-q[0],e.clientY-q[1]))}
+ P.set(e.pointerId,[e.clientX,e.clientY])});
+for(const n of ['pointerup','pointercancel'])cv.addEventListener(n,e=>P.delete(e.pointerId));
+cv.addEventListener('wheel',e=>{e.preventDefault();rd=cl(rd*(1+e.deltaY*.001))},{passive:false});
+function rs(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix()}addEventListener('resize',rs);rs();
+(function a(){C.position.set(tg.x+rd*Math.sin(ph)*Math.sin(th),tg.y+rd*Math.cos(ph),tg.z+rd*Math.sin(ph)*Math.cos(th));C.lookAt(tg);R.render(S,C);
+ if(st.lab){const w=innerWidth,h=innerHeight;for(const l of LB){const v=l.c.clone().project(C);const ok=v.z<1&&(l.c.y<1||!st.roof||l.c.z>12||l.c.z<0);l.d.style.display=ok?'block':'none';if(ok)l.d.style.transform='translate('+((v.x+1)*w/2)+'px,'+((1-v.y)*h/2)+'px) translate(-50%,-50%)'}}
+ requestAnimationFrame(a)})();
+</script></body></html>
